@@ -253,17 +253,22 @@ class RunPage extends Component {
       mmap: this.nes.mmap.toJSON(),
       gameName: romName
     };
-    db._states.put(stateData).then(e => console.log("Save success.", e));
+    // db._states.put(stateData).then(e => console.log("Save success.", e));
+    this.stateData = stateData;
   };
 
   handleRestoreState = () => {
     console.log("Attempting to restore state...");
     var romName = this.props.match.params.rom;
+    //console.log(this.stateData);
+    this.nes.fromJSON({ romData: this.romData, ...this.stateData });
 
+    /*
     db._states.get({ gameName: romName }).then(data => {
       console.log(this.romData.length);
       this.nes.fromJSON({ romData: this.romData, ...data });
     });
+  */
   };
   layout = () => {
     let navbarHeight = parseFloat(window.getComputedStyle(this.navbar).height);
