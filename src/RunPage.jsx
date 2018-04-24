@@ -9,6 +9,7 @@ import KeyboardController from "./KeyboardController";
 import Screen from "./Screen";
 import Speakers from "./Speakers";
 import { NES } from "jsnes";
+import db from "./db";
 
 function loadBinary(path, callback) {
   var req = new XMLHttpRequest();
@@ -68,6 +69,12 @@ class RunPage extends Component {
             disabled={!this.state.running}
           >
             {this.state.paused ? "Resume" : "Pause"}
+          </Button>
+          <Button outline color="primary" onClick={this.handleSaveState}>
+            Save State
+          </Button>
+          <Button outline color="primary" onClick={this.handleRestoreState}>
+            Rest. State
           </Button>
         </nav>
 
@@ -156,6 +163,17 @@ class RunPage extends Component {
     this.layout();
 
     this.load();
+
+    /*
+    this.hugeData = {};
+    setTimeout(() => {
+      this.hugeData = this.nes.toJSON();
+      setTimeout(() => {
+        this.nes.fromJSON(this.huge);
+        this.nes.reloadROM();
+      }, 1000);
+    }, 3000);
+    */
   }
 
   componentWillUnmount() {
@@ -195,6 +213,8 @@ class RunPage extends Component {
 
   handleLoaded = data => {
     this.setState({ uiEnabled: true, running: true });
+    this.romData = data;
+    console.log(data.length);
     this.nes.loadROM(data);
     this.start();
   };
@@ -223,6 +243,28 @@ class RunPage extends Component {
     }
   };
 
+  handleSaveState = () => {
+    console.log("Attempting to save state...");
+    // load up DB
+    var romName = this.props.match.params.rom;
+    var stateData = {
+      cpu: this.nes.cpu.toJSON(),
+      ppu: this.nes.ppu.toJSON(),
+      mmap: this.nes.mmap.toJSON(),
+      gameName: romName
+    };
+    db._states.put(stateData).then(e => console.log("Save success.", e));
+  };
+
+  handleRestoreState = () => {
+    console.log("Attempting to restore state...");
+    var romName = this.props.match.params.rom;
+
+    db._states.get({ gameName: romName }).then(data => {
+      console.log(this.romData.length);
+      this.nes.fromJSON({ romData: this.romData, ...data });
+    });
+  };
   layout = () => {
     let navbarHeight = parseFloat(window.getComputedStyle(this.navbar).height);
     this.screenContainer.style.height = `${window.innerHeight -
